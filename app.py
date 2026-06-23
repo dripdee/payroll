@@ -43,8 +43,18 @@ def process_payslips(filepath):
         if not smtp_user or not smtp_password:
             log_msg("Error: SMTP credentials not found in .env. Skipping email sending.")
             has_credentials = False
+            smtp_conn = None
         else:
-            has_credentials = True
+            try:
+                log_msg("Connecting to email server...")
+                smtp_conn = smtplib.SMTP(smtp_server, smtp_port)
+                smtp_conn.starttls()
+                smtp_conn.login(smtp_user, smtp_password)
+                has_credentials = True
+            except Exception as e:
+                log_msg(f"Failed to connect to SMTP server: {e}")
+                has_credentials = False
+                smtp_conn = None
 
         month_year = datetime.now().strftime("%B %Y").upper()
 
@@ -134,7 +144,7 @@ def process_payslips(filepath):
                 log_msg(f"Error generating PDF for {worker_id}.")
                 continue
 
-            if has_credentials:
+            if has_credentials and smtp_conn:
                 try:
                     msg = EmailMessage()
                     msg['Subject'] = f'Payslip for {month_year} - Worker ID: {worker_id}'
@@ -146,17 +156,20 @@ def process_payslips(filepath):
                         pdf_data = f.read()
                     msg.add_attachment(pdf_data, maintype='application', subtype='pdf', filename=os.path.basename(pdf_path))
 
-                    with smtplib.SMTP(smtp_server, smtp_port) as server:
-                        server.starttls()
-                        server.login(smtp_user, smtp_password)
-                        server.send_message(msg)
+                    smtp_conn.send_message(msg)
                     log_msg(f"Email sent successfully to {email}.")
                     count += 1
                 except Exception as e:
                     log_msg(f"Failed to send email to {email}: {e}")
 
-            time.sleep(1) # Small pause to prevent SMTP rate limits
+            time.sleep(0.1) # Small pause to prevent rapid-fire blocking, much faster than 1s
 
+        if has_credentials and smtp_conn:
+            try:
+                smtp_conn.quit()
+            except:
+                pass
+                
         log_msg(f"Finished processing all {count} valid payslips.")
         log_msg("DONE")
     except Exception as e:
