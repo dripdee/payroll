@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automated Payslip Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fira+Code&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+    <h1>Bulk Payslip Generator</h1>
+    <p class="subtitle">Upload the standard SALARY Excel sheet to automatically generate and email PDFs</p>
+
+    <div class="upload-area" id="drop-zone">
+        <div class="upload-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+        </div>
+        <div id="file-name" style="font-weight:600; color:#475569;">Click or Drag to Upload Excel</div>
+        <div style="font-size: 13px; color: #94a3b8; margin-top: 5px;">Supports .xlsx</div>
+        <input type="file" id="file-input" accept=".xlsx" onchange="handleFileSelect(event)">
+    </div>
+
+    <button id="process-btn" class="btn-primary" onclick="startProcess()" disabled>Process Payslips</button>
+
+    <div id="log-container" class="log-container">
+        <!-- Logs will stream here -->
+    </div>
+</div>
+
+<script>
+    let selectedFile = null;
+
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+            selectedFile = file;
+            document.getElementById('file-name').innerText = file.name;
+            document.getElementById('file-name').style.color = '#3b82f6';
+            document.getElementById('process-btn').disabled = false;
+        }
+    }
+
+    const dropZone = document.getElementById('drop-zone');
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+    });
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+            document.getElementById('file-input').files = e.dataTransfer.files;
+            handleFileSelect({target: {files: e.dataTransfer.files}});
+        }
+    });
+
+    async function startProcess() {
+        if (!selectedFile) return;
+
+        const btn = document.getElementById('process-btn');
+        btn.disabled = true;
+        btn.innerText = "Processing...";
+        
+        const logContainer = document.getElementById('log-container');
+        logContainer.style.display = 'block';
+        logContainer.innerHTML = '<div class="log-entry">Uploading file...</div>';
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        try {
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                logContainer.innerHTML += `<div class="log-entry">File uploaded. Starting processing thread...</div>`;
+                startLogStream();
+            } else {
+                logContainer.innerHTML += `<div class="log-entry error">Error: ${data.message}</div>`;
+                btn.disabled = false;
+                btn.innerText = "Process Payslips";
+            }
+        } catch (e) {
+            logContainer.innerHTML += `<div class="log-entry error">Upload failed: ${e.message}</div>`;
+            btn.disabled = false;
+            btn.innerText = "Process Payslips";
+        }
+    }
+
+    function startLogStream() {
+        const logContainer = document.getElementById('log-container');
+        const evtSource = new EventSource('/stream');
+
+        evtSource.onmessage = function(event) {
+            const msg = event.data;
+            let className = "log-entry";
+            if (msg.includes("Error") || msg.includes("Failed")) className += " error";
+            if (msg.includes("successfully") || msg.includes("Completed")) className += " success";
+            
+            logContainer.innerHTML += `<div class="${className}">${msg}</div>`;
+            logContainer.scrollTop = logContainer.scrollHeight;
+
+            if (msg.includes("Finished processing all")) {
+                evtSource.close();
+                document.getElementById('process-btn').innerText = "Done!";
+            }
+        };
+
+        evtSource.onerror = function() {
+            evtSource.close();
+        };
+    }
+</script>
+</body>
+</html>

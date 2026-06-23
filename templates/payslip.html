@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Pay Slip</title>
+<style>
+    @page {
+        size: A4 portrait;
+        margin: 1.5cm;
+    }
+    body {
+        font-family: Helvetica, sans-serif;
+        font-size: 11pt;
+        color: #000;
+    }
+    /* We use multiple tables with 100% width. */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: -1px; /* Collapses borders between consecutive tables */
+    }
+    td, th {
+        border: 1px solid #000;
+        padding: 3px 5px; /* Reduced for compactness */
+        vertical-align: middle;
+    }
+    .text-center { text-align: center; }
+    .text-blue { color: #2b579a; }
+    .font-bold { font-weight: bold; }
+    .bg-light { background-color: #f9f9f9; }
+    
+    /* Utility classes to hide specific borders so stacked tables look like one */
+    .border-bottom-none { border-bottom: none; }
+    .border-top-none { border-top: none; }
+    
+    .w-20 { width: 20%; }
+    .w-30 { width: 30%; }
+</style>
+</head>
+<body>
+
+    <!-- Header Table -->
+    <table>
+        <tr>
+            <td class="text-center text-blue font-bold border-bottom-none" style="font-size: 24pt; border-bottom: 0; padding-top: 15px;">
+                RIYA ENTERPRISES
+            </td>
+        </tr>
+        <tr>
+            <td class="text-center text-blue font-bold border-top-none border-bottom-none" style="font-size: 16pt; border-top: 0; border-bottom: 0;">
+                LABOUR SUPPLIER &amp; CONTRACTOR
+            </td>
+        </tr>
+        <tr>
+            <td class="text-center text-blue border-top-none border-bottom-none" style="font-size: 11pt; border-top: 0; border-bottom: 0;">
+                MISHRA CENTER 3rd FLOOR ROOM NO -212,213 ADITYAPUR PIN - 831013
+            </td>
+        </tr>
+        <tr>
+            <td class="text-center font-bold border-top-none" style="font-size: 12pt; border-top: 0;">
+                Pay Slip for {{ month_year }}
+            </td>
+        </tr>
+    </table>
+
+    <!-- Employee Details Table -->
+    <table>
+        <tr>
+            <td class="w-20 font-bold">Employee ID</td>
+            <td class="w-30 text-center font-bold">{{ worker_id }}</td>
+            <td class="w-20 font-bold">UAN</td>
+            <td class="w-30 text-center">{{ uan if uan else ':' }}</td>
+        </tr>
+        <tr>
+            <td class="font-bold">Employee Name</td>
+            <td class="text-center font-bold">{{ worker_name }}</td>
+            <td class="font-bold">PF No.</td>
+            <td class="text-center">{{ pf_no if pf_no else ':' }}</td>
+        </tr>
+        <tr>
+            <td class="font-bold">Designation</td>
+            <td class="text-center">{{ designation }}</td>
+            <td class="font-bold">Bank</td>
+            <td class="text-center">{{ bank }}</td>
+        </tr>
+        <tr>
+            <td class="font-bold">Department</td>
+            <td class="text-center">{{ department }}</td>
+            <td class="font-bold">IFSC No</td>
+            <td class="text-center">{{ ifsc }}</td>
+        </tr>
+        <tr>
+            <td class="font-bold">Mail Address</td>
+            <td class="text-center">{{ email }}</td>
+            <td class="font-bold">Account No.</td>
+            <td class="text-center">{{ account }}</td>
+        </tr>
+    </table>
+
+    <!-- Hours and Wages Table -->
+    <table>
+        <tr>
+            <td class="w-20 font-bold">Total Hours</td>
+            <td class="w-30 text-center font-bold">{{ total_hours }}</td>
+            <td class="w-20 font-bold">Rate / Hours</td>
+            <td class="w-30 text-center font-bold">{{ rate }}</td>
+        </tr>
+        <tr>
+            <td class="font-bold">Gross Wages</td>
+            <td class="text-center font-bold">{{ gross_wages }}</td>
+            <td class="font-bold">Prasent Days</td>
+            <td class="text-center font-bold">{{ present_days }}</td>
+        </tr>
+        <tr>
+            <td class="font-bold">LOP Days</td>
+            <td class="text-center">{{ lop_days }}</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+        </tr>
+    </table>
+
+    <!-- Earnings & Deductions Table -->
+    <table>
+        <tr style="height: 0; border: none;">
+            <td class="w-20" style="height: 0; padding: 0; border: none;"></td>
+            <td class="w-30" style="height: 0; padding: 0; border: none;"></td>
+            <td class="w-20" style="height: 0; padding: 0; border: none;"></td>
+            <td class="w-30" style="height: 0; padding: 0; border: none;"></td>
+        </tr>
+        <tr>
+            <td colspan="2" class="text-center font-bold" style="width: 50%;">Earnings</td>
+            <td colspan="2" class="text-center font-bold" style="width: 50%;">Deductions</td>
+        </tr>
+        <tr>
+            <td class="w-20">BASIC</td>
+            <td class="w-30 text-center">{{ basic }}</td>
+            <td class="w-20">EPF</td>
+            <td class="w-30 text-center">{{ epf }}</td>
+        </tr>
+        <tr>
+            <td>ADVANCE</td>
+            <td class="text-center">{{ advance }}</td>
+            <td>ESI</td>
+            <td class="text-center">{{ esi }}</td>
+        </tr>
+        <tr>
+            <td>CANTEEN</td>
+            <td class="text-center">{{ canteen }}</td>
+            <td>FINE</td>
+            <td class="text-center">{{ fine }}</td>
+        </tr>
+        <tr>
+            <td>INCENTIVE</td>
+            <td class="text-center">{{ incentive }}</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+        </tr>
+        <tr>
+            <td>EXTRA</td>
+            <td class="text-center">{{ extra }}</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+        </tr>
+        <tr>
+            <td class="font-bold">Total Earnings</td>
+            <td class="text-center font-bold">{{ total_earnings }}</td>
+            <td class="font-bold">Total Deductions</td>
+            <td class="text-center font-bold">{{ total_deductions }}</td>
+        </tr>
+    </table>
+
+    <!-- Net Salary Table -->
+    <table>
+        <tr>
+            <td style="width: 50%; border: none;">&nbsp;</td>
+            <td class="w-20 font-bold text-center" style="font-size: 12pt;">Net Salary</td>
+            <td class="w-30 text-center font-bold" style="font-size: 12pt; background-color: #f0f0f0;">{{ net_salary }}</td>
+        </tr>
+    </table>
+
+</body>
+</html>
